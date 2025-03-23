@@ -63,12 +63,3 @@ button:hover {
     text-align: left;
     font-size: 14px;
 }
-
-.landmark {
-    display: inline-block;
-    width: 25px;
-    height: 25px;
-    margin: 5px;
-    border-radius: 50%;
-    border: 1px solid black;
-}

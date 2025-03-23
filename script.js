@@ -22,25 +22,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     const pixels = imageData.data;
-                    let r = 0, g = 0, b = 0, count = 0;
+                    let colorCounts = {};
+                    let maxColor = { r: 0, g: 0, b: 0 };
+                    let maxCount = 0;
 
+                    // Count occurrences of each color
                     for (let i = 0; i < pixels.length; i += 4) {
-                        r += pixels[i];
-                        g += pixels[i + 1];
-                        b += pixels[i + 2];
-                        count++;
+                        let colorKey = `${pixels[i]},${pixels[i + 1]},${pixels[i + 2]}`;
+                        colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1;
+                        if (colorCounts[colorKey] > maxCount) {
+                            maxCount = colorCounts[colorKey];
+                            maxColor = { r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] };
+                        }
                     }
 
-                    r = Math.round(r / count);
-                    g = Math.round(g / count);
-                    b = Math.round(b / count);
+                    // Find the closest named color
+                    const trueColor = getClosestNamedColor(maxColor.r, maxColor.g, maxColor.b);
 
                     // Different models predicting color
                     const modelPredictions = {
-                        "Simple Difference": getModelPrediction(r, g, b, 0.80),
-                        "Weighted Difference": getModelPrediction(r, g, b, 0.85),
-                        "Neural Network (Approximation)": getModelPrediction(r, g, b, 0.95),
-                        "Random Forest (Approximation)": getModelPrediction(r, g, b, 0.92),
+                        "Simple Difference": getModelPrediction(maxColor.r, maxColor.g, maxColor.b, 0.80),
+                        "Weighted Difference": getModelPrediction(maxColor.r, maxColor.g, maxColor.b, 0.85),
+                        "Neural Network (Approximation)": getModelPrediction(maxColor.r, maxColor.g, maxColor.b, 0.95),
+                        "Random Forest (Approximation)": getModelPrediction(maxColor.r, maxColor.g, maxColor.b, 0.92),
                     };
 
                     // Determine the highest confidence prediction
@@ -67,9 +71,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     // Actual vs Predicted
                     thoughtProcessDiv.innerHTML += `
-                        <p><strong>Actual Color:</strong> rgb(${r}, ${g}, ${b})</p>
+                        <p><strong>True Color:</strong> ${trueColor.name} (rgb(${trueColor.r}, ${trueColor.g}, ${trueColor.b}))</p>
+                        <p><strong>Actual Color (Dominant):</strong> rgb(${maxColor.r}, ${maxColor.g}, ${maxColor.b})</p>
                         <p><strong>Predicted Color:</strong> rgb(${bestColor.r}, ${bestColor.g}, ${bestColor.b})</p>
-                        <p><strong>Change:</strong> ΔR: ${bestColor.r - r}, ΔG: ${bestColor.g - g}, ΔB: ${bestColor.b - b}</p>
+                        <p><strong>Change:</strong> ΔR: ${bestColor.r - maxColor.r}, ΔG: ${bestColor.g - maxColor.g}, ΔB: ${bestColor.b - maxColor.b}</p>
                     `;
 
                     // Model Predictions
@@ -101,5 +106,37 @@ document.addEventListener("DOMContentLoaded", function () {
                      b: Math.max(0, Math.min(255, b + Math.random() * 20 - 10)) },
             confidence: confidence
         };
+    }
+
+    function getClosestNamedColor(r, g, b) {
+        const colors = [
+            { name: "Red", r: 255, g: 0, b: 0 },
+            { name: "Green", r: 0, g: 255, b: 0 },
+            { name: "Blue", r: 0, g: 0, b: 255 },
+            { name: "White", r: 255, g: 255, b: 255 },
+            { name: "Black", r: 0, g: 0, b: 0 },
+            { name: "Gray", r: 128, g: 128, b: 128 },
+            { name: "Yellow", r: 255, g: 255, b: 0 },
+            { name: "Orange", r: 255, g: 165, b: 0 },
+            { name: "Pink", r: 255, g: 192, b: 203 },
+            { name: "Purple", r: 128, g: 0, b: 128 },
+        ];
+
+        let closestColor = colors[0];
+        let minDistance = Infinity;
+
+        colors.forEach(color => {
+            let distance = Math.sqrt(
+                (color.r - r) ** 2 +
+                (color.g - g) ** 2 +
+                (color.b - b) ** 2
+            );
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestColor = color;
+            }
+        });
+
+        return closestColor;
     }
 });
