@@ -60,6 +60,8 @@ button:hover {
     padding: 10px;
     background: #eee;
     border-radius: 5px;
+    text-align: left;
+    font-size: 14px;
 }
 
 .landmark {

@@ -7,11 +7,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const thoughtProcessDiv = document.getElementById("thoughtProcess");
     const toggleButton = document.getElementById("toggleThoughtProcess");
 
-    if (!imageUpload || !canvas || !colorBox || !confidenceText || !thoughtProcessDiv || !toggleButton) {
-        console.error("One or more elements are missing from the HTML.");
-        return;
-    }
-
     imageUpload.addEventListener("change", function (event) {
         const file = event.target.files[0];
         if (file) {
@@ -28,20 +23,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     const pixels = imageData.data;
                     let r = 0, g = 0, b = 0, count = 0;
-                    let landmarks = [];
 
                     for (let i = 0; i < pixels.length; i += 4) {
-                        let pixelR = pixels[i];
-                        let pixelG = pixels[i + 1];
-                        let pixelB = pixels[i + 2];
-                        r += pixelR;
-                        g += pixelG;
-                        b += pixelB;
+                        r += pixels[i];
+                        g += pixels[i + 1];
+                        b += pixels[i + 2];
                         count++;
-
-                        if (i % (canvas.width * 4 * 10) === 0) {
-                            landmarks.push({ r: pixelR, g: pixelG, b: pixelB });
-                        }
                     }
 
                     r = Math.round(r / count);
@@ -76,14 +63,23 @@ document.addEventListener("DOMContentLoaded", function () {
                     confidenceText.innerHTML = `Confidence: ${(highestConfidence * 100).toFixed(2)}%`;
 
                     // Thought Process Visualization
-                    thoughtProcessDiv.innerHTML = "<strong>Landmarks Sampled:</strong><br>";
-                    landmarks.forEach(color => {
-                        let div = document.createElement("div");
-                        div.className = "landmark";
-                        div.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
-                        div.title = `rgb(${color.r}, ${color.g}, ${color.b})`;
-                        thoughtProcessDiv.appendChild(div);
-                    });
+                    thoughtProcessDiv.innerHTML = "<h3>Thought Process:</h3>";
+
+                    // Actual vs Predicted
+                    thoughtProcessDiv.innerHTML += `
+                        <p><strong>Actual Color:</strong> rgb(${r}, ${g}, ${b})</p>
+                        <p><strong>Predicted Color:</strong> rgb(${bestColor.r}, ${bestColor.g}, ${bestColor.b})</p>
+                        <p><strong>Change:</strong> ΔR: ${bestColor.r - r}, ΔG: ${bestColor.g - g}, ΔB: ${bestColor.b - b}</p>
+                    `;
+
+                    // Model Predictions
+                    thoughtProcessDiv.innerHTML += `<h4>Model Predictions:</h4>`;
+                    for (let model in modelPredictions) {
+                        const { color, confidence } = modelPredictions[model];
+                        thoughtProcessDiv.innerHTML += `
+                            <p>${model}: rgb(${color.r}, ${color.g}, ${color.b}) (Confidence: ${(confidence * 100).toFixed(2)}%)</p>
+                        `;
+                    }
 
                     thoughtProcessDiv.classList.remove("hidden");
                     toggleButton.innerText = "Hide Thought Process";
@@ -98,12 +94,11 @@ document.addEventListener("DOMContentLoaded", function () {
         toggleButton.innerText = thoughtProcessDiv.classList.contains("hidden") ? "Show Thought Process" : "Hide Thought Process";
     });
 
-    // Simulated function for different model predictions
     function getModelPrediction(r, g, b, confidence) {
         return {
-            color: { r: Math.min(255, r + Math.random() * 20 - 10), 
-                     g: Math.min(255, g + Math.random() * 20 - 10), 
-                     b: Math.min(255, b + Math.random() * 20 - 10) },
+            color: { r: Math.max(0, Math.min(255, r + Math.random() * 20 - 10)), 
+                     g: Math.max(0, Math.min(255, g + Math.random() * 20 - 10)), 
+                     b: Math.max(0, Math.min(255, b + Math.random() * 20 - 10)) },
             confidence: confidence
         };
     }
