@@ -27,20 +27,38 @@ document.getElementById("imageUpload").addEventListener("change", function(event
                     count++;
                     
                     if (i % (canvas.width * 4 * 10) === 0) { // Sample landmarks
-                        landmarks.push(`rgb(${pixelR}, ${pixelG}, ${pixelB})`);
+                        landmarks.push({ r: pixelR, g: pixelG, b: pixelB });
                     }
                 }
                 r = Math.round(r / count);
                 g = Math.round(g / count);
                 b = Math.round(b / count);
                 let confidence = Math.min(100, Math.round((255 - Math.abs(r - g) - Math.abs(g - b)) / 255 * 100));
+
+                document.getElementById("colorResult").innerHTML = `Predicted Color: <span style="font-weight:bold;">rgb(${r}, ${g}, ${b})</span>`;
+                document.getElementById("confidence").innerHTML = `Confidence: ${confidence}%`;
                 
-                document.getElementById("colorResult").innerHTML = `Predicted Color: <span style="color:rgb(${r}, ${g}, ${b}); font-weight:bold;">rgb(${r}, ${g}, ${b})</span><br>Confidence: ${confidence}%`;
-                
-                let thoughtProcess = `<strong>Landmarks Sampled:</strong><br>${landmarks.join(" | ")}`;
-                document.getElementById("thoughtProcess").innerHTML = thoughtProcess;
+                let colorBox = document.getElementById("colorBox");
+                colorBox.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+                // Thought Process Visualization
+                let thoughtProcessDiv = document.getElementById("thoughtProcess");
+                thoughtProcessDiv.innerHTML = "<strong>Landmarks Sampled:</strong><br>";
+
+                landmarks.forEach(color => {
+                    let div = document.createElement("div");
+                    div.className = "landmark";
+                    div.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+                    thoughtProcessDiv.appendChild(div);
+                });
             };
         };
         reader.readAsDataURL(file);
     }
+});
+
+// Toggle Thought Process Visibility
+document.getElementById("toggleThoughtProcess").addEventListener("click", function() {
+    let thoughtProcessDiv = document.getElementById("thoughtProcess");
+    thoughtProcessDiv.classList.toggle("hidden");
 });

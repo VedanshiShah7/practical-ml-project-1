@@ -7,10 +7,20 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Upload an Image to Predict Colors</h1>
-    <input type="file" id="imageUpload" accept="image/*">
-    <canvas id="canvas"></canvas>
-    <p id="colorResult">Predicted Color: </p>
+    <div class="container">
+        <h1>Color Prediction Tool</h1>
+        <input type="file" id="imageUpload" accept="image/*">
+        <canvas id="canvas"></canvas>
+        
+        <div id="colorDisplay">
+            <p id="colorResult">Predicted Color: <span id="colorBox"></span></p>
+            <p id="confidence"></p>
+        </div>
+
+        <button id="toggleThoughtProcess">Show Thought Process</button>
+        <div id="thoughtProcess" class="hidden"></div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
