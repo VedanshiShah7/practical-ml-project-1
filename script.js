@@ -16,18 +16,29 @@ document.getElementById("imageUpload").addEventListener("change", function(event
                 const pixels = imageData.data;
                 let r = 0, g = 0, b = 0, count = 0;
                 
+                let landmarks = [];
                 for (let i = 0; i < pixels.length; i += 4) {
-                    r += pixels[i];
-                    g += pixels[i + 1];
-                    b += pixels[i + 2];
+                    let pixelR = pixels[i];
+                    let pixelG = pixels[i + 1];
+                    let pixelB = pixels[i + 2];
+                    r += pixelR;
+                    g += pixelG;
+                    b += pixelB;
                     count++;
+                    
+                    if (i % (canvas.width * 4 * 10) === 0) { // Sample landmarks
+                        landmarks.push(`rgb(${pixelR}, ${pixelG}, ${pixelB})`);
+                    }
                 }
                 r = Math.round(r / count);
                 g = Math.round(g / count);
                 b = Math.round(b / count);
+                let confidence = Math.min(100, Math.round((255 - Math.abs(r - g) - Math.abs(g - b)) / 255 * 100));
                 
-                document.getElementById("colorResult").textContent = `Predicted Color: rgb(${r}, ${g}, ${b})`;
-                document.getElementById("colorResult").style.color = `rgb(${r}, ${g}, ${b})`;
+                document.getElementById("colorResult").innerHTML = `Predicted Color: <span style="color:rgb(${r}, ${g}, ${b}); font-weight:bold;">rgb(${r}, ${g}, ${b})</span><br>Confidence: ${confidence}%`;
+                
+                let thoughtProcess = `<strong>Landmarks Sampled:</strong><br>${landmarks.join(" | ")}`;
+                document.getElementById("thoughtProcess").innerHTML = thoughtProcess;
             };
         };
         reader.readAsDataURL(file);
