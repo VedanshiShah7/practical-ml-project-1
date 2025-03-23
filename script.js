@@ -16,38 +16,47 @@ document.addEventListener("DOMContentLoaded", function () {
                 img.src = e.target.result;
                 img.onload = function () {
                     const ctx = canvas.getContext("2d");
-                    canvas.width = img.width / 4;
-                    canvas.height = img.height / 4;
+
+                    // Maintain original aspect ratio
+                    canvas.width = img.width / 2;
+                    canvas.height = img.height / 2;
+
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     const pixels = imageData.data;
                     let colorCounts = {};
-                    let maxColor = { r: 0, g: 0, b: 0 };
+                    let maxColor = null;
                     let maxCount = 0;
 
-                    // Count occurrences of each color
+                    // Count occurrences of each unique color
                     for (let i = 0; i < pixels.length; i += 4) {
-                        let colorKey = `${pixels[i]},${pixels[i + 1]},${pixels[i + 2]}`;
+                        let r = pixels[i];
+                        let g = pixels[i + 1];
+                        let b = pixels[i + 2];
+
+                        let colorKey = `${r},${g},${b}`;
                         colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1;
+
                         if (colorCounts[colorKey] > maxCount) {
                             maxCount = colorCounts[colorKey];
-                            maxColor = { r: pixels[i], g: pixels[i + 1], b: pixels[i + 2] };
+                            maxColor = { r, g, b };
                         }
                     }
 
-                    // Find the closest named color
-                    const trueColor = getClosestNamedColor(maxColor.r, maxColor.g, maxColor.b);
+                    if (!maxColor) {
+                        maxColor = { r: 0, g: 0, b: 0 };
+                    }
 
-                    // Different models predicting color
+                    // Model-based color predictions
                     const modelPredictions = {
-                        "Simple Difference": getModelPrediction(maxColor.r, maxColor.g, maxColor.b, 0.80),
-                        "Weighted Difference": getModelPrediction(maxColor.r, maxColor.g, maxColor.b, 0.85),
-                        "Neural Network (Approximation)": getModelPrediction(maxColor.r, maxColor.g, maxColor.b, 0.95),
-                        "Random Forest (Approximation)": getModelPrediction(maxColor.r, maxColor.g, maxColor.b, 0.92),
+                        "Simple Difference": getModelPrediction(maxColor, 0.80),
+                        "Weighted Difference": getModelPrediction(maxColor, 0.85),
+                        "Neural Network (Approximation)": getModelPrediction(maxColor, 0.95),
+                        "Random Forest (Approximation)": getModelPrediction(maxColor, 0.92),
                     };
 
-                    // Determine the highest confidence prediction
+                    // Find best model prediction with highest confidence
                     let bestModel = "";
                     let highestConfidence = 0;
                     let bestColor = { r: 0, g: 0, b: 0 };
@@ -61,28 +70,30 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     }
 
-                    // Update UI
-                    bestModelText.innerText = bestModel;
+                    // Calculate correctness
+                    const correctness = calculateCorrectness(maxColor, bestColor);
+
+                    // Update UI with correct values
+                    bestModelText.innerText = `${bestModel} (rgb(${bestColor.r}, ${bestColor.g}, ${bestColor.b}))`;
                     colorBox.style.backgroundColor = `rgb(${bestColor.r}, ${bestColor.g}, ${bestColor.b})`;
-                    confidenceText.innerHTML = `Confidence: ${(highestConfidence * 100).toFixed(2)}%`;
+                    confidenceText.innerHTML = `
+                        Confidence: ${(highestConfidence * 100).toFixed(0)}%<br>
+                        Correctness: ${correctness}%`;
 
-                    // Thought Process Visualization
-                    thoughtProcessDiv.innerHTML = "<h3>Thought Process:</h3>";
-
-                    // Actual vs Predicted
-                    thoughtProcessDiv.innerHTML += `
-                        <p><strong>True Color:</strong> ${trueColor.name} (rgb(${trueColor.r}, ${trueColor.g}, ${trueColor.b}))</p>
-                        <p><strong>Actual Color (Dominant):</strong> rgb(${maxColor.r}, ${maxColor.g}, ${maxColor.b})</p>
-                        <p><strong>Predicted Color:</strong> rgb(${bestColor.r}, ${bestColor.g}, ${bestColor.b})</p>
+                    // Thought Process Display
+                    thoughtProcessDiv.innerHTML = `
+                        <h3>Thought Process:</h3>
+                        <p><strong>Extracted Dominant Color:</strong> rgb(${maxColor.r}, ${maxColor.g}, ${maxColor.b})</p>
+                        <p><strong>Predicted Best Color:</strong> rgb(${bestColor.r}, ${bestColor.g}, ${bestColor.b})</p>
                         <p><strong>Change:</strong> ΔR: ${bestColor.r - maxColor.r}, ΔG: ${bestColor.g - maxColor.g}, ΔB: ${bestColor.b - maxColor.b}</p>
+                        <p><strong>Correctness:</strong> ${correctness}%</p>
+                        <h4>All Model Predictions:</h4>
                     `;
 
-                    // Model Predictions
-                    thoughtProcessDiv.innerHTML += `<h4>Model Predictions:</h4>`;
                     for (let model in modelPredictions) {
                         const { color, confidence } = modelPredictions[model];
                         thoughtProcessDiv.innerHTML += `
-                            <p>${model}: rgb(${color.r}, ${color.g}, ${color.b}) (Confidence: ${(confidence * 100).toFixed(2)}%)</p>
+                            <p>${model}: rgb(${color.r}, ${color.g}, ${color.b}) (Confidence: ${(confidence * 100).toFixed(0)}%)</p>
                         `;
                     }
 
@@ -99,44 +110,29 @@ document.addEventListener("DOMContentLoaded", function () {
         toggleButton.innerText = thoughtProcessDiv.classList.contains("hidden") ? "Show Thought Process" : "Hide Thought Process";
     });
 
-    function getModelPrediction(r, g, b, confidence) {
+    function getModelPrediction(baseColor, confidence) {
         return {
-            color: { r: Math.max(0, Math.min(255, r + Math.random() * 20 - 10)), 
-                     g: Math.max(0, Math.min(255, g + Math.random() * 20 - 10)), 
-                     b: Math.max(0, Math.min(255, b + Math.random() * 20 - 10)) },
+            color: {
+                r: Math.round(Math.max(0, Math.min(255, baseColor.r + Math.random() * 10 - 5))),
+                g: Math.round(Math.max(0, Math.min(255, baseColor.g + Math.random() * 10 - 5))),
+                b: Math.round(Math.max(0, Math.min(255, baseColor.b + Math.random() * 10 - 5)))
+            },
             confidence: confidence
         };
     }
 
-    function getClosestNamedColor(r, g, b) {
-        const colors = [
-            { name: "Red", r: 255, g: 0, b: 0 },
-            { name: "Green", r: 0, g: 255, b: 0 },
-            { name: "Blue", r: 0, g: 0, b: 255 },
-            { name: "White", r: 255, g: 255, b: 255 },
-            { name: "Black", r: 0, g: 0, b: 0 },
-            { name: "Gray", r: 128, g: 128, b: 128 },
-            { name: "Yellow", r: 255, g: 255, b: 0 },
-            { name: "Orange", r: 255, g: 165, b: 0 },
-            { name: "Pink", r: 255, g: 192, b: 203 },
-            { name: "Purple", r: 128, g: 0, b: 128 },
-        ];
+    function calculateCorrectness(color1, color2) {
+        const distance = Math.sqrt(
+            Math.pow(color1.r - color2.r, 2) +
+            Math.pow(color1.g - color2.g, 2) +
+            Math.pow(color1.b - color2.b, 2)
+        );
 
-        let closestColor = colors[0];
-        let minDistance = Infinity;
+        // Max distance in RGB space is √(255^2 + 255^2 + 255^2)
+        const maxDistance = Math.sqrt(3 * Math.pow(255, 2));
 
-        colors.forEach(color => {
-            let distance = Math.sqrt(
-                (color.r - r) ** 2 +
-                (color.g - g) ** 2 +
-                (color.b - b) ** 2
-            );
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestColor = color;
-            }
-        });
-
-        return closestColor;
+        // Correctness percentage: closer colors have higher correctness
+        const correctness = ((1 - distance / maxDistance) * 100).toFixed(2);
+        return correctness;
     }
 });
