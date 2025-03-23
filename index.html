@@ -4,16 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Color Prediction Tool</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <h1>Color Prediction Tool</h1>
         <input type="file" id="imageUpload" accept="image/*">
         <canvas id="canvas"></canvas>
-        
-        <div id="colorDisplay">
-            <p id="colorResult">Predicted Color: <span id="colorBox"></span></p>
+
+        <div id="results">
+            <p><strong>Best Prediction:</strong> <span id="bestModel">N/A</span></p>
+            <div id="colorBox"></div>
             <p id="confidence"></p>
         </div>
 

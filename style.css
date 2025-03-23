@@ -23,15 +23,14 @@ canvas {
     border: 1px solid #ddd;
 }
 
-#colorDisplay {
+#results {
     margin-top: 15px;
-    font-size: 18px;
 }
 
 #colorBox {
     display: inline-block;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 5px;
     border: 1px solid #000;
     vertical-align: middle;
