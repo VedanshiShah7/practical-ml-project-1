@@ -32,3 +32,25 @@ Try out the tool:  [https://vedanshishah7.github.io/practical-ml-project-1/](htt
 - README.md: Instructions for the project.
 - requirements.txt: Dependencies needed for the project.
 - LICENSE: Legal usage terms.
+
+## How to Run the Project
+#### Easiest Method:
+1. Open main.ipynb in Jupyter Notebook.
+2. Run the cells sequentially—it will:
+- Load the dataset (your_data.csv).
+- Perform preprocessing.
+- Train/evaluate models.
+- Show results.
+
+#### Alternative (Manual) Approach:
+1. Install dependencies:
+`pip install -r requirements.txt`
+
+2. Run scripts manually:
+`python data_preprocessing.py`
+`python model_training.py`
+`python main.py`
+
+3. Website Functionality
+- If the project includes a web dashboard, opening index.html in a browser might allow users to visualize results without running code manually.
+
